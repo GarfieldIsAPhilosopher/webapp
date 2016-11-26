@@ -3,6 +3,7 @@ var router = express.Router();
 var User = require('../model/user');
 var passwordHash=require('password-hash');
 var session = require('client-sessions');
+var rpc_client = require('../rpc_client/rpc_client');
 
 var Title='garfield'
 /* GET home page. */
@@ -42,11 +43,8 @@ router.post('/login', function(req,res,next){
         message: "password incorrect <a href='/register'>register</a>"
         })
       }
-
-    
     }
   }
-  
   );
 });
 
@@ -60,10 +58,27 @@ router.get('/register', function(req,res,next){
 res.render('register')
 })
 
+router.get('/search', function(req, res, next){
+ var query = req.query.search_text;
+ console.log("search text:" + query)
+ rpc_client.searchArea(query, function(response){
+  if (response==undefined || response=== null){
+    console.log("no results");
+} else{
+  res.render('search_result', {
+    title: Title,
+    query: query,
+    results: response
+});
+}
+})
+});
+
+
 router.post('/register', function(req,res,next){
   var email=req.body.email;
   var password=req.body.password;
-var hashedPassword=passwordHash.generate(password);
+  var hashedPassword=passwordHash.generate(password);
 
   User.find({email:email}, function(err, users){
     if (err) throw err;
